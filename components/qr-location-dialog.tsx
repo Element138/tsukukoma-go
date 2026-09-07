@@ -17,7 +17,8 @@ function CameraView({ onFound }: { onFound: (location: Location) => void }) {
   const [attempt, setAttempt] = useState(0);
   const [status, setStatus] = useState<"starting" | "scanning" | "error">("starting");
   const [message, setMessage] = useState("");
-  const [hint, setHint] = useState("");
+  const [rejection, setRejection] = useState("");
+  const [shakeKey, setShakeKey] = useState(0);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -27,11 +28,9 @@ function CameraView({ onFound }: { onFound: (location: Location) => void }) {
     let engine: Awaited<ReturnType<typeof QrScanner.createQrEngine>> | undefined;
     let frame = 0;
     let startupTimer: ReturnType<typeof setTimeout> | undefined;
-    let helpTimer: ReturnType<typeof setTimeout> | undefined;
     const dispose = () => {
       disposed = true;
       clearTimeout(startupTimer);
-      clearTimeout(helpTimer);
       cancelAnimationFrame(frame);
       stream?.getTracks().forEach((track) => track.stop());
       video.srcObject = null;
@@ -45,7 +44,7 @@ function CameraView({ onFound }: { onFound: (location: Location) => void }) {
     };
     setStatus("starting");
     setMessage("");
-    setHint("");
+    setRejection("");
 
     const start = async () => {
       if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
@@ -78,15 +77,13 @@ function CameraView({ onFound }: { onFound: (location: Location) => void }) {
         if (disposed) return;
         clearTimeout(startupTimer);
         setStatus("scanning");
-        helpTimer = setTimeout(() => {
-          if (!disposed) setHint("読み取れない場合は、明るい場所でQRコード全体を映し、距離を少し変えてください。");
-        }, 12000);
         const canvas = document.createElement("canvas");
         let lastScan = 0;
         let failures = 0;
+        let rejectUntil = 0;
         const scan = async (now: number) => {
           if (disposed) return;
-          if (now - lastScan >= 40 && video.readyState >= 2 && video.videoWidth > 0) {
+          if (now >= rejectUntil && now - lastScan >= 40 && video.readyState >= 2 && video.videoWidth > 0) {
             lastScan = now;
             try {
               const width = video.videoWidth;
@@ -102,7 +99,9 @@ function CameraView({ onFound }: { onFound: (location: Location) => void }) {
               const id = parseLocationQr(result.data);
               const location = id ? getLocationById(id) : null;
               if (!location || ["m", "f", "169"].includes(location.locid)) {
-                setHint("このQRコードは出発地点として利用できません。校内のTsukukoma GOの位置確認用QRコードを映してください。");
+                rejectUntil = now + 1400;
+                setRejection("Tsukukoma GOのQRコードではありません");
+                setShakeKey((value) => value + 1);
               } else {
                 dispose();
                 onFoundRef.current(location);
@@ -139,20 +138,23 @@ function CameraView({ onFound }: { onFound: (location: Location) => void }) {
   }, [attempt]);
 
   return (
-    <>
-      <div className="relative overflow-hidden rounded-xl bg-black">
-        <video ref={videoRef} muted playsInline autoPlay aria-label="QRコード読み取り用カメラ" className="aspect-[4/3] max-h-[45dvh] w-full object-contain" />
+    <div className="flex min-h-0 flex-1 flex-col bg-black">
+      <div className="relative min-h-0 flex-1 overflow-hidden bg-black">
+        <video ref={videoRef} muted playsInline autoPlay aria-label="QRコード読み取り用カメラ" className="h-full min-h-[55dvh] w-full object-cover" />
         {status === "starting" && <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/70 text-white" role="status"><Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />カメラを起動中…</div>}
+        {rejection && status !== "error" ? (
+          <div key={shakeKey} role="alert" className="animate-ios-head-shake absolute inset-x-5 bottom-8 rounded-2xl bg-red-600/95 px-4 py-4 text-center text-sm font-bold text-white shadow-2xl backdrop-blur-sm motion-reduce:animate-none">
+            {rejection}
+          </div>
+        ) : null}
       </div>
       {status === "error" ? (
-        <>
+        <div className="space-y-4 bg-background p-5">
           <p role="alert" className="text-base">{message}</p>
-          <button type="button" className={`${buttonClass} bg-primary text-primary-foreground`} onClick={() => setAttempt((value) => value + 1)}>再試行</button>
-        </>
-      ) : (
-        <p role="status" className="text-base text-muted-foreground">{hint || "校内の位置確認用QRコード全体をカメラに映してください。自動で読み取ります。"}</p>
-      )}
-    </>
+          <button type="button" className={`${buttonClass} w-full bg-primary text-primary-foreground`} onClick={() => setAttempt((value) => value + 1)}>再試行</button>
+        </div>
+      ) : null}
+    </div>
   );
 }
 
@@ -167,14 +169,16 @@ export function QrLocationDialog({ onSelect }: { onSelect: (location: Location) 
   return (
     <Dialog open={open} onOpenChange={(next) => next ? setOpen(true) : close()}>
       <DialogTrigger asChild>
-        <button type="button" className={`${buttonClass} flex shrink-0 flex-col items-center justify-center gap-1 bg-blue-600 text-white hover:bg-blue-700`} aria-label="QRコードで現在地を確認">
+        <button type="button" className={`${buttonClass} flex shrink-0 flex-col items-center justify-center gap-1 bg-blue-600 text-white hover:bg-blue-700`} aria-label="ポスターから現在地を特定">
           <ScanQrCode className="h-6 w-6" aria-hidden="true" /><span className="whitespace-nowrap text-sm">現在地</span>
         </button>
       </DialogTrigger>
-      <DialogContent showCloseButton={false} className="max-h-[calc(100dvh-2rem)] overflow-y-auto">
-        <button type="button" onClick={close} aria-label="閉じる" className="absolute right-2 top-2 flex h-11 w-11 items-center justify-center rounded-lg focus-visible:ring-2 focus-visible:ring-ring"><X className="h-5 w-5" aria-hidden="true" /></button>
-        <DialogTitle className="pr-10 text-xl">{found ? "現在地を確認しました" : "QRコードで現在地を確認"}</DialogTitle>
-        <DialogDescription className="text-base">{found ? "閉じると、この場所が出発地点に設定されます。" : "カメラの使用を許可してください。映像は端末内で処理され、送信・保存されません。"}</DialogDescription>
+      <DialogContent showCloseButton={false} className={found ? "max-h-[calc(100dvh-2rem)] overflow-y-auto" : "inset-0 left-0 top-0 flex h-dvh w-screen max-w-none translate-x-0 translate-y-0 flex-col gap-0 overflow-hidden rounded-none border-0 p-0 sm:max-w-none"}>
+        <button type="button" onClick={close} aria-label="閉じる" className={`absolute right-2 top-2 z-20 flex h-11 w-11 items-center justify-center rounded-full focus-visible:ring-2 focus-visible:ring-ring ${found ? "" : "bg-black/45 text-white backdrop-blur-sm"}`}><X className="h-5 w-5" aria-hidden="true" /></button>
+        <div className={found ? "contents" : "shrink-0 space-y-2 bg-background px-5 pb-4 pt-5 pr-16"}>
+          <DialogTitle className="text-xl">{found ? "現在地を確認しました" : "ポスターから現在地を特定"}</DialogTitle>
+          <DialogDescription className="text-base">{found ? "閉じると、この場所が出発地点に設定されます。" : "お近くに掲示されているTsukukoma GOのQRコードを読み取ってください"}</DialogDescription>
+        </div>
         {found ? (
           <div className="space-y-4 py-4 text-center" role="status">
             <CheckCircle2 className="mx-auto h-16 w-16 text-green-600" aria-hidden="true" />
@@ -182,7 +186,7 @@ export function QrLocationDialog({ onSelect }: { onSelect: (location: Location) 
             <p className="flex items-center justify-center gap-2 text-base text-muted-foreground"><MapPin className="h-5 w-5" aria-hidden="true" />{found.position}</p>
           </div>
         ) : open ? <CameraView onFound={setFound} /> : null}
-        <button type="button" onClick={close} className={`${buttonClass} ${found ? "bg-primary text-primary-foreground" : "border border-border"}`}>{found ? "閉じる" : "キャンセルして手動で選択"}</button>
+        {found ? <button type="button" onClick={close} className={`${buttonClass} bg-primary text-primary-foreground`}>閉じる</button> : null}
       </DialogContent>
     </Dialog>
   );

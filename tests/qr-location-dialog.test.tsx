@@ -33,7 +33,7 @@ afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 function open() {
   const onSelect = vi.fn();
   render(<QrLocationDialog onSelect={onSelect} />);
-  fireEvent.click(screen.getByRole("button", { name: "QRコードで現在地を確認" }));
+  fireEvent.click(screen.getByRole("button", { name: "ポスターから現在地を特定" }));
   return onSelect;
 }
 
@@ -41,6 +41,12 @@ describe("QR location dialog", () => {
   it("does not request a camera before opening", () => {
     render(<QrLocationDialog onSelect={vi.fn()} />);
     expect(getUserMedia).not.toHaveBeenCalled();
+  });
+  it("opens the poster-first camera screen with concise copy", async () => {
+    open();
+    expect(await screen.findByRole("heading", { name: "ポスターから現在地を特定" })).toBeTruthy();
+    expect(screen.getByText("お近くに掲示されているTsukukoma GOのQRコードを読み取ってください")).toBeTruthy();
+    expect(screen.queryByText("キャンセルして手動で選択")).toBeNull();
   });
   it("stops on success and commits the location only when closed", async () => {
     mocks.scan.mockResolvedValue({ data: "https://tkgo.bunkasai.info/?dep=58&qr=true" });
@@ -56,7 +62,8 @@ describe("QR location dialog", () => {
   it.each(["unknown", "m", "f", "91"])("rejects unavailable departure %s and keeps scanning", async (id) => {
     mocks.scan.mockResolvedValueOnce({ data: `https://tkgo.bunkasai.info/?dep=${id}&qr=true` });
     const onSelect = open();
-    await screen.findByText(/このQRコードは出発地点として利用できません/);
+    const rejection = await screen.findByText("Tsukukoma GOのQRコードではありません");
+    expect(rejection.className).toContain("animate-ios-head-shake");
     expect(stop).not.toHaveBeenCalled();
     expect(onSelect).not.toHaveBeenCalled();
   });
@@ -78,7 +85,7 @@ describe("QR location dialog", () => {
     let resolve!: (stream: MediaStream) => void;
     getUserMedia.mockReturnValue(new Promise<MediaStream>((done) => { resolve = done; }));
     const onSelect = open();
-    fireEvent.click(screen.getByRole("button", { name: "キャンセルして手動で選択" }));
+    fireEvent.click(screen.getByRole("button", { name: "閉じる" }));
     await act(async () => { resolve(stream); });
     expect(stop).toHaveBeenCalled();
     expect(onSelect).not.toHaveBeenCalled();
@@ -94,7 +101,7 @@ describe("QR location dialog", () => {
     Object.defineProperty(navigator, "mediaDevices", { configurable: true, value: undefined });
     open();
     await screen.findByText(/このブラウザではカメラを利用できません/);
-    expect(screen.getByRole("button", { name: "キャンセルして手動で選択" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "閉じる" })).toBeTruthy();
   });
   it("stops the camera on unmount", async () => {
     open();
@@ -128,7 +135,7 @@ describe("QR location dialog", () => {
     mocks.scan.mockReturnValue(new Promise((done) => { resolve = done; }));
     const onSelect = open();
     await waitFor(() => expect(mocks.scan).toHaveBeenCalled());
-    fireEvent.click(screen.getByRole("button", { name: "キャンセルして手動で選択" }));
+    fireEvent.click(screen.getByRole("button", { name: "閉じる" }));
     await act(async () => { resolve({ data: "https://tkgo.bunkasai.info/?dep=58&qr=true" }); });
     expect(onSelect).not.toHaveBeenCalled();
     expect(screen.queryByText("現在地を確認しました")).toBeNull();

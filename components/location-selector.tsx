@@ -1347,7 +1347,7 @@ export function LocationSelector({
           highlight && ((departure && dep) || (!departure && dest))
             ? "border-2 border-blue-500"
             : "border border-2 border-border"
-        } rounded-lg px-4 py-3 cursor-pointer flex items-center justify-between`}
+        } min-h-[72px] rounded-lg px-4 py-3 cursor-pointer flex items-center justify-between`}
         onClick={handleInputClick}
       >
         <div className="flex items-center gap-3 flex-1">
