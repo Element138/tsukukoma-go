@@ -12,6 +12,7 @@ import Logo from "@/components/logo";
 import Footer from "@/components/footer";
 import { Metadata } from "next";
 import { de } from "date-fns/locale";
+import { QrLocationDialog } from "@/components/qr-location-dialog";
 
 import {
   Popover,
@@ -153,6 +154,14 @@ export default function HomePageClient() {
     updateURL(location, undefined, undefined, false);
   };
 
+  const handleDetectedLocation = (location: Location) => {
+    // A departure cannot also be the destination, including aliases of one map node.
+    const nextDestination = destination?.locid === location.locid ? null : destination;
+    setCurrentLocation(location);
+    setDestination(nextDestination);
+    updateURL(location, nextDestination, undefined, false);
+  };
+
   const handleDestinationChange = (location: Location | null) => {
     setDestination(location);
     updateURL(undefined, location, undefined, false);
@@ -255,13 +264,20 @@ export default function HomePageClient() {
       <div className="mx-auto max-w-md space-y-8 pt-1">
         {/* <Kagayaki width={80} height={80} /> */}
         <div className="relative space-y-4">
-          <LocationSelector
-            label="どこから"
-            placeholder="出発地点を選択"
-            value={currentLocation}
-            departure={true}
-            onChange={handleCurrentLocationChange}
-          />
+          <div className="flex items-stretch gap-2">
+            <div className="min-w-0 flex-1">
+              <LocationSelector
+                label="どこから"
+                placeholder="出発地点を選択"
+                value={currentLocation}
+                departure={true}
+                onChange={handleCurrentLocationChange}
+              />
+            </div>
+            <div className="flex pt-7">
+              <QrLocationDialog onSelect={handleDetectedLocation} />
+            </div>
+          </div>
 
           <LocationSelector
             label="どこまで"
