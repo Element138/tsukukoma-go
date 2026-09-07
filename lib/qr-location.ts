@@ -1,4 +1,12 @@
 /** A scanned URL is data, never a navigation target. */
+export function isTsukukomaGoUrl(value: string): boolean {
+  try {
+    return new URL(value).hostname === "tkgo.bunkasai.info";
+  } catch {
+    return false;
+  }
+}
+
 export function parseLocationQr(value: string): string | null {
   try {
     const url = new URL(value);

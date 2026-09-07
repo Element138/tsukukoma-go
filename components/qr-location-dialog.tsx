@@ -5,7 +5,7 @@ import { CheckCircle2, Loader2, MapPin, ScanQrCode, X } from "lucide-react";
 import type QrScanner from "qr-scanner";
 import type { Location } from "@/app/page";
 import { getLocationById } from "@/components/location-selector";
-import { cameraErrorMessage, parseLocationQr } from "@/lib/qr-location";
+import { cameraErrorMessage, isTsukukomaGoUrl, parseLocationQr } from "@/lib/qr-location";
 import { Dialog, DialogContent, DialogDescription, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 const buttonClass = "min-h-12 rounded-lg px-4 py-3 text-base font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
@@ -100,7 +100,11 @@ function CameraView({ onFound }: { onFound: (location: Location) => void }) {
               const location = id ? getLocationById(id) : null;
               if (!location || ["m", "f", "169"].includes(location.locid)) {
                 rejectUntil = now + 1400;
-                setRejection("Tsukukoma GOのQRコードではありません");
+                setRejection(
+                  isTsukukomaGoUrl(result.data)
+                    ? "このTsukukoma GOのQRコードは場所の情報を含んでいません"
+                    : "Tsukukoma GOのQRコードではありません"
+                );
                 setShakeKey((value) => value + 1);
               } else {
                 dispose();

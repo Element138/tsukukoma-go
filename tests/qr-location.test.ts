@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cameraErrorMessage, parseLocationQr } from "../lib/qr-location";
+import { cameraErrorMessage, isTsukukomaGoUrl, parseLocationQr } from "../lib/qr-location";
 
 describe("location QR validation", () => {
   it.each([
@@ -22,6 +22,19 @@ describe("location QR validation", () => {
     "https://tkgo.bunkasai.info/?dep=58&qr=true&nav=true",
     "https://tkgo.bunkasai.info/?dep=58&qr=true#other",
   ])("rejects %s", (url) => expect(parseLocationQr(url)).toBeNull());
+});
+
+describe("Tsukukoma GO URL identification", () => {
+  it.each([
+    "https://tkgo.bunkasai.info/?dep=missing&qr=true",
+    "http://tkgo.bunkasai.info/?dep=58&qr=true",
+    "https://tkgo.bunkasai.info/not-a-location",
+  ])("identifies an invalid Tsukukoma GO URL %s", (url) => expect(isTsukukomaGoUrl(url)).toBe(true));
+  it.each([
+    "https://tkgo.bunkasai.info.evil.test/?dep=58&qr=true",
+    "https://tkgo.bunkasai.info@evil.test/?dep=58&qr=true",
+    "hello",
+  ])("does not identify an unrelated URL %s", (url) => expect(isTsukukomaGoUrl(url)).toBe(false));
 });
 
 it.each(["NotAllowedError", "SecurityError", "NotFoundError", "OverconstrainedError", "NotReadableError", "AbortError", "UnknownError"])("provides recovery for %s", (name) => {

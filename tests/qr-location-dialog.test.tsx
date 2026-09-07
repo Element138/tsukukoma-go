@@ -62,10 +62,15 @@ describe("QR location dialog", () => {
   it.each(["unknown", "m", "f", "91"])("rejects unavailable departure %s and keeps scanning", async (id) => {
     mocks.scan.mockResolvedValueOnce({ data: `https://tkgo.bunkasai.info/?dep=${id}&qr=true` });
     const onSelect = open();
-    const rejection = await screen.findByText("Tsukukoma GOのQRコードではありません");
+    const rejection = await screen.findByText("このTsukukoma GOのQRコードは場所の情報を含んでいません");
     expect(rejection.className).toContain("animate-ios-head-shake");
     expect(stop).not.toHaveBeenCalled();
     expect(onSelect).not.toHaveBeenCalled();
+  });
+  it("explains that an unrelated QR is not a Tsukukoma GO code", async () => {
+    mocks.scan.mockResolvedValueOnce({ data: "https://example.com/" });
+    open();
+    await screen.findByText("Tsukukoma GOのQRコードではありません");
   });
   it("continues after native decoder no-code results", async () => {
     mocks.scan.mockRejectedValue("Scanner error: No QR code found");
