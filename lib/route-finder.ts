@@ -26,6 +26,40 @@ export interface NodeTriplet {
   image: string;
 }
 
+interface DirectRoutePlan {
+  instruction: string;
+  image: string;
+}
+
+// Plans for destinations that share a node directly with a staircase landing.
+// These keys and the IDs embedded in image filenames are graph-node IDs (locid),
+// not the separate location IDs accepted by findRoute.
+const DIRECT_ROUTE_PLANS: Record<string, DirectRoutePlan> = {
+  "3-102": { instruction: "右手に目的地", image: "20_6-3-102.jpg" },
+  "6-105": { instruction: "右手に目的地", image: "48_14-6-105.jpg" },
+  "14-113": { instruction: "右手に目的地", image: "105_2-14-113.jpg" },
+  "28-119": { instruction: "左手に目的地", image: "225_35-28-119.jpg" },
+  "28-120": { instruction: "右手に目的地", image: "223_35-28-120.jpg" },
+  "29-121": { instruction: "左手に目的地", image: "231_36-29-121.jpg" },
+  "33-132": { instruction: "左手に目的地", image: "274_38-33-132.jpg" },
+  "33-133": { instruction: "右手に目的地", image: "275_38-33-133.jpg" },
+  "34-134": { instruction: "左手に目的地", image: "284_39-34-134.jpg" },
+  "34-135": { instruction: "右手に目的地", image: "283_39-34-135.jpg" },
+  "40-141": { instruction: "左手に目的地", image: "316_35-40-141.jpg" },
+  "40-142": { instruction: "右手に目的地", image: "317_35-40-142.jpg" },
+  "43-143": { instruction: "左手に目的地", image: "349_36-43-143.jpg" },
+  "45-127": { instruction: "左手に目的地", image: "373_38-45-127.jpg" },
+  "45-128": { instruction: "右手に目的地", image: "370_38-45-128.jpg" },
+  "48-144": { instruction: "左手に目的地", image: "392_39-48-144.jpg" },
+  "48-145": { instruction: "右手に目的地", image: "393_39-48-145.jpg" },
+  "56-152": { instruction: "左手に目的地", image: "468_49-56-152.jpg" },
+  "56-153": { instruction: "右手に目的地", image: "469_49-56-153.jpg" },
+  "57-148": { instruction: "左手に目的地", image: "475_50-57-148.jpg" },
+  "59-157": { instruction: "右手に目的地", image: "497_54-59-157.jpg" },
+  "66-160": { instruction: "左手に目的地", image: "531_55-66-160.jpg" },
+  "66-161": { instruction: "右手に目的地", image: "532_55-66-161.jpg" },
+};
+
 // Graph definition with nodes and edges
 // const GRAPH_NODES: GraphNode[] = [
 //   { id: 1, coordinates: { floor: "Ground Floor" } },
@@ -6650,6 +6684,43 @@ export async function findRoute(
 
   if (path.length === 0) {
     throw new Error(`No route found from ${departureLoc} to ${destinationLoc}`);
+  }
+
+  const directRoutePlan =
+    path.length === 2
+      ? DIRECT_ROUTE_PLANS[`${departureLoc}-${destinationLoc}`]
+      : undefined;
+
+  if (directRoutePlan) {
+    const edge = getEdgeInfo(departureLoc, destinationLoc);
+
+    return {
+      nodes: path,
+      edges: [{ from: departureLoc, to: destinationLoc }],
+      // NavigationView intentionally hides the final route item. The third item
+      // keeps that terminal convention while exposing both direct-route steps.
+      route: [
+        {
+          id: departureLoc.toString(),
+          title: "まず階段を背にする",
+          image: directRoutePlan.image,
+          notice: null,
+        },
+        {
+          id: destinationLoc.toString(),
+          title: directRoutePlan.instruction,
+          image: directRoutePlan.image,
+          notice: edge?.notice,
+        },
+        {
+          id: destinationLoc.toString(),
+          title: "-",
+          image: directRoutePlan.image,
+          notice: null,
+        },
+      ],
+      cost: edge?.distance ?? 0,
+    };
   }
 
   const route = [];
