@@ -95,9 +95,6 @@ importers:
       '@vercel/analytics':
         specifier: 1.3.1
         version: 1.3.1(next@14.2.16(@babel/core@7.28.4)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)
-      '@vercel/blob':
-        specifier: ^2.0.0
-        version: 2.0.0
       '@vercel/speed-insights':
         specifier: ^1.2.0
         version: 1.2.0(next@14.2.16(@babel/core@7.28.4)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)
@@ -2053,10 +2050,6 @@ packages:
         optional: true
       react:
         optional: true
-
-  '@vercel/blob@2.0.0':
-    resolution: {integrity: sha512-oAj7Pdy83YKSwIaMFoM7zFeLYWRc+qUpW3PiDSblxQMnGFb43qs4bmfq7dr/+JIfwhs6PTwe1o2YBwKhyjWxXw==}
-    engines: {node: '>=20.0.0'}
 
   '@vercel/speed-insights@1.2.0':
     resolution: {integrity: sha512-y9GVzrUJ2xmgtQlzFP2KhVRoCglwfRQgjyfY607aU0hh0Un6d0OUyrJkjuAlsV18qR4zfoFPs/BiIj9YDS6Wzw==}
@@ -5200,14 +5193,6 @@ snapshots:
     optionalDependencies:
       next: 14.2.16(@babel/core@7.28.4)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react: 18.3.1
-
-  '@vercel/blob@2.0.0':
-    dependencies:
-      async-retry: 1.3.3
-      is-buffer: 2.0.5
-      is-node-process: 1.2.0
-      throttleit: 2.1.0
-      undici: 5.29.0
 
   '@vercel/speed-insights@1.2.0(next@14.2.16(@babel/core@7.28.4)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)':
     optionalDependencies:
