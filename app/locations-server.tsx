@@ -7,7 +7,7 @@ export const LOCATIONS: Location[] = [
     name: "最寄りの男子トイレ",
     category: "男子トイレ自動選択",
     organizer: "",
-    position: "オレンジ館・ブルー館・レッド館に限る",
+    position: "体育館・喫茶班内のトイレは対象外",
     keywords: ["もよりのだんしといれ"],
   },
   {
@@ -16,7 +16,7 @@ export const LOCATIONS: Location[] = [
     name: "最寄りの女子トイレ",
     category: "女子トイレ自動選択",
     organizer: "",
-    position: "オレンジ館・ブルー館・レッド館に限る",
+    position: "体育館・喫茶班内のトイレは対象外",
     keywords: ["もよりのじょしといれ"],
   },
   {
@@ -1152,3 +1152,4 @@ export const LOCATIONS: Location[] = [
     keywords: [],
   },
 ];
+

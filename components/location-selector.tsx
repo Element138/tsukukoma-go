@@ -12,7 +12,7 @@ const LOCATIONS: Location[] = [
     name: "最寄りの男子トイレ",
     category: "男子トイレ自動選択",
     organizer: "",
-    position: "オレンジ館・ブルー館・レッド館に限る",
+    position: "体育館・喫茶班内のトイレは対象外",
     keywords: ["もよりのだんしといれ"],
   },
   {
@@ -21,7 +21,7 @@ const LOCATIONS: Location[] = [
     name: "最寄りの女子トイレ",
     category: "女子トイレ自動選択",
     organizer: "",
-    position: "オレンジ館・ブルー館・レッド館に限る",
+    position: "体育館・喫茶班内のトイレは対象外",
     keywords: ["もよりのじょしといれ"],
   },
   {
@@ -1388,7 +1388,9 @@ export function LocationSelector({
       </div>
 
       {isOpen && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-popover border border-2 border-border rounded-lg shadow-lg z-50">
+        <div className={`absolute top-full left-0 mt-2 bg-popover border border-2 border-border rounded-lg shadow-lg z-50 ${
+          departure ? "w-[calc(100%+5.5rem)]" : "w-full"
+        }`}>
           <div className="relative w-full">
             {showInputBalloon && (
               <div className="absolute w-48 -top-16 left-1/2 -translate-x-1/2 z-50 bg-blue-500 text-white rounded-lg py-2 px-3 shadow-lg animate-fade-in-out pointer-events-none">
@@ -1486,3 +1488,4 @@ export function LocationSelector({
     </div>
   );
 }
+

@@ -82,7 +82,7 @@ describe("QR location dialog", () => {
   it.each(["unknown", "m", "f", "91"])("rejects unavailable departure %s and keeps scanning", async (id) => {
     mocks.scan.mockResolvedValueOnce({ data: `https://tkgo.bunkasai.info/?dep=${id}&qr=true` });
     const onSelect = open();
-    const rejection = await screen.findByText("このTsukukoma GOのQRコードは場所の情報を含んでいません");
+    const rejection = await screen.findByText("このTsukukoma GOのQRコードは現在地情報を含んでいません");
     expect(rejection.className).toContain("animate-ios-head-shake");
     expect(stop).not.toHaveBeenCalled();
     expect(onSelect).not.toHaveBeenCalled();
@@ -90,7 +90,7 @@ describe("QR location dialog", () => {
   it.each(["unknown", "8", "58"])("rejects unavailable destination %s and keeps scanning", async (id) => {
     mocks.scan.mockResolvedValueOnce({ data: `https://tkgo.bunkasai.info/?dep=58&dest=${id}` });
     const onSelect = open();
-    await screen.findByText("このTsukukoma GOのQRコードは場所の情報を含んでいません");
+    await screen.findByText("このTsukukoma GOのQRコードは現在地情報を含んでいません");
     expect(stop).not.toHaveBeenCalled();
     expect(onSelect).not.toHaveBeenCalled();
   });
@@ -173,3 +173,4 @@ describe("QR location dialog", () => {
     expect(screen.queryByText("現在地を確認しました")).toBeNull();
   });
 });
+

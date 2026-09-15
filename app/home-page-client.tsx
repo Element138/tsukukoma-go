@@ -277,7 +277,9 @@ export default function HomePageClient() {
               />
             </div>
             <div className="flex pt-7">
-              <QrLocationDialog onSelect={handleDetectedLocation} />
+              <div className="w-20">
+                <QrLocationDialog onSelect={handleDetectedLocation} />
+              </div>
             </div>
           </div>
 
@@ -326,3 +328,4 @@ export default function HomePageClient() {
     </div>
   );
 }
+
