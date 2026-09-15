@@ -10,7 +10,12 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle, DialogTrigger } 
 
 const buttonClass = "min-h-12 rounded-lg px-4 py-3 text-base font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
 
-function CameraView({ onFound }: { onFound: (location: Location) => void }) {
+type DetectedQrLocations = {
+  departure: Location;
+  destination: Location | null;
+};
+
+function CameraView({ onFound }: { onFound: (locations: DetectedQrLocations) => void }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const onFoundRef = useRef(onFound);
   onFoundRef.current = onFound;
@@ -96,9 +101,13 @@ function CameraView({ onFound }: { onFound: (location: Location) => void }) {
               });
               if (disposed) return;
               failures = 0;
-              const id = parseLocationQr(result.data);
-              const location = id ? getLocationById(id) : null;
-              if (!location || ["m", "f", "169"].includes(location.locid)) {
+              const payload = parseLocationQr(result.data);
+              const departure = payload ? getLocationById(payload.departureId) : null;
+              const destination = payload?.destinationId ? getLocationById(payload.destinationId) : null;
+              const hasInvalidDestination = Boolean(payload?.destinationId) && (
+                !destination || destination.locid === "106" || destination.locid === departure?.locid
+              );
+              if (!departure || ["m", "f", "169"].includes(departure.locid) || hasInvalidDestination) {
                 rejectUntil = now + 1400;
                 setRejection(
                   isTsukukomaGoUrl(result.data)
@@ -108,7 +117,7 @@ function CameraView({ onFound }: { onFound: (location: Location) => void }) {
                 setShakeKey((value) => value + 1);
               } else {
                 dispose();
-                onFoundRef.current(location);
+                onFoundRef.current({ departure, destination });
                 return;
               }
             } catch (error) {
@@ -162,11 +171,11 @@ function CameraView({ onFound }: { onFound: (location: Location) => void }) {
   );
 }
 
-export function QrLocationDialog({ onSelect }: { onSelect: (location: Location) => void }) {
+export function QrLocationDialog({ onSelect }: { onSelect: (departure: Location, destination: Location | null) => void }) {
   const [open, setOpen] = useState(false);
-  const [found, setFound] = useState<Location | null>(null);
+  const [found, setFound] = useState<DetectedQrLocations | null>(null);
   const close = () => {
-    if (found) onSelect(found);
+    if (found) onSelect(found.departure, found.destination);
     setOpen(false);
     setFound(null);
   };
@@ -186,8 +195,8 @@ export function QrLocationDialog({ onSelect }: { onSelect: (location: Location) 
         {found ? (
           <div className="space-y-4 py-4 text-center" role="status">
             <CheckCircle2 className="mx-auto h-16 w-16 text-green-600" aria-hidden="true" />
-            <p className="text-xl font-bold">{found.name}</p>
-            <p className="flex items-center justify-center gap-2 text-base text-muted-foreground"><MapPin className="h-5 w-5" aria-hidden="true" />{found.position}</p>
+            <p className="text-xl font-bold">{found.departure.name}</p>
+            <p className="flex items-center justify-center gap-2 text-base text-muted-foreground"><MapPin className="h-5 w-5" aria-hidden="true" />{found.departure.position}</p>
           </div>
         ) : open ? <CameraView onFound={setFound} /> : null}
         {found ? <button type="button" onClick={close} className={`${buttonClass} bg-primary text-primary-foreground`}>閉じる</button> : null}

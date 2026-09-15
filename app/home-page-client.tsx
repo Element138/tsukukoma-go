@@ -154,9 +154,11 @@ export default function HomePageClient() {
     updateURL(location, undefined, undefined, false);
   };
 
-  const handleDetectedLocation = (location: Location) => {
+  const handleDetectedLocation = (location: Location, scannedDestination: Location | null) => {
     // A departure cannot also be the destination, including aliases of one map node.
-    const nextDestination = destination?.locid === location.locid ? null : destination;
+    const nextDestination = scannedDestination ?? (
+      destination?.locid === location.locid ? null : destination
+    );
     setCurrentLocation(location);
     setDestination(nextDestination);
     updateURL(location, nextDestination, undefined, false);
