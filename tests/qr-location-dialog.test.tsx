@@ -173,4 +173,3 @@ describe("QR location dialog", () => {
     expect(screen.queryByText("現在地を確認しました")).toBeNull();
   });
 });
-

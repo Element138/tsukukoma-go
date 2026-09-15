@@ -1488,4 +1488,3 @@ export function LocationSelector({
     </div>
   );
 }
-

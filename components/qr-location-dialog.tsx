@@ -204,4 +204,3 @@ export function QrLocationDialog({ onSelect }: { onSelect: (departure: Location,
     </Dialog>
   );
 }
-

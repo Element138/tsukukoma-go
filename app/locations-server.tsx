@@ -1152,4 +1152,3 @@ export const LOCATIONS: Location[] = [
     keywords: [],
   },
 ];
-

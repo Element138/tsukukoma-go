@@ -566,4 +566,3 @@ export function NavigationView({
     </div>
   );
 }
-
