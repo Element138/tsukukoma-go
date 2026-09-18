@@ -58,12 +58,39 @@ describe("QR location dialog", () => {
     fireEvent.click(screen.getAllByRole("button", { name: "閉じる" })[0]);
     expect(onSelect).toHaveBeenCalledTimes(1);
     expect(onSelect.mock.calls[0][0].id).toBe("58");
+    expect(onSelect.mock.calls[0][1]).toBeNull();
+  });
+  it.each([
+    "https://tkgo.bunkasai.info/?dep=58",
+    "https://tkgo.bunkasai.info/?dep=58&qr=false",
+  ])("accepts optional QR metadata in %s", async (url) => {
+    mocks.scan.mockResolvedValue({ data: url });
+    const onSelect = open();
+    await screen.findByText("現在地を確認しました");
+    fireEvent.click(screen.getAllByRole("button", { name: "閉じる" })[0]);
+    expect(onSelect.mock.calls[0][0].id).toBe("58");
+    expect(onSelect.mock.calls[0][1]).toBeNull();
+  });
+  it("returns a valid scanned destination with the departure", async () => {
+    mocks.scan.mockResolvedValue({ data: "https://tkgo.bunkasai.info/?dep=58&dest=2&qr=false" });
+    const onSelect = open();
+    await screen.findByText("現在地を確認しました");
+    fireEvent.click(screen.getAllByRole("button", { name: "閉じる" })[0]);
+    expect(onSelect.mock.calls[0][0].id).toBe("58");
+    expect(onSelect.mock.calls[0][1].id).toBe("2");
   });
   it.each(["unknown", "m", "f", "91"])("rejects unavailable departure %s and keeps scanning", async (id) => {
     mocks.scan.mockResolvedValueOnce({ data: `https://tkgo.bunkasai.info/?dep=${id}&qr=true` });
     const onSelect = open();
-    const rejection = await screen.findByText("このTsukukoma GOのQRコードは場所の情報を含んでいません");
+    const rejection = await screen.findByText("このTsukukoma GOのQRコードは現在地情報を含んでいません");
     expect(rejection.className).toContain("animate-ios-head-shake");
+    expect(stop).not.toHaveBeenCalled();
+    expect(onSelect).not.toHaveBeenCalled();
+  });
+  it.each(["unknown", "8", "58"])("rejects unavailable destination %s and keeps scanning", async (id) => {
+    mocks.scan.mockResolvedValueOnce({ data: `https://tkgo.bunkasai.info/?dep=58&dest=${id}` });
+    const onSelect = open();
+    await screen.findByText("このTsukukoma GOのQRコードは現在地情報を含んでいません");
     expect(stop).not.toHaveBeenCalled();
     expect(onSelect).not.toHaveBeenCalled();
   });

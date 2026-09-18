@@ -3,9 +3,17 @@ import { cameraErrorMessage, isTsukukomaGoUrl, parseLocationQr } from "../lib/qr
 
 describe("location QR validation", () => {
   it.each([
+    "https://tkgo.bunkasai.info/?dep=58",
     "https://tkgo.bunkasai.info/?dep=58&qr=true",
+    "https://tkgo.bunkasai.info/?dep=58&qr=false",
+    "https://tkgo.bunkasai.info/?dep=58&qr=poster",
+    "https://tkgo.bunkasai.info/?dep=58&qr=true&qr=false",
     "https://tkgo.bunkasai.info/?qr=true&dep=58",
-  ])("accepts the location URL %s", (url) => expect(parseLocationQr(url)).toBe("58"));
+  ])("accepts the location URL %s", (url) => expect(parseLocationQr(url)).toEqual({ departureId: "58", destinationId: null }));
+  it.each([
+    "https://tkgo.bunkasai.info/?dep=58&dest=2",
+    "https://tkgo.bunkasai.info/?dest=2&dep=58&qr=false",
+  ])("accepts destination information in %s", (url) => expect(parseLocationQr(url)).toEqual({ departureId: "58", destinationId: "2" }));
   it.each([
     "hello", "/?dep=58&qr=true", "javascript:alert(1)",
     "http://tkgo.bunkasai.info/?dep=58&qr=true",
@@ -14,11 +22,10 @@ describe("location QR validation", () => {
     "https://user@tkgo.bunkasai.info/?dep=58&qr=true",
     "https://tkgo.bunkasai.info:444/?dep=58&qr=true",
     "https://tkgo.bunkasai.info/other?dep=58&qr=true",
-    "https://tkgo.bunkasai.info/?dep=58",
     "https://tkgo.bunkasai.info/?dep=&qr=true",
-    "https://tkgo.bunkasai.info/?dep=58&qr=false",
     "https://tkgo.bunkasai.info/?dep=58&qr=true&dep=1",
-    "https://tkgo.bunkasai.info/?dep=58&qr=true&qr=false",
+    "https://tkgo.bunkasai.info/?dep=58&dest=",
+    "https://tkgo.bunkasai.info/?dep=58&dest=2&dest=3",
     "https://tkgo.bunkasai.info/?dep=58&qr=true&nav=true",
     "https://tkgo.bunkasai.info/?dep=58&qr=true#other",
   ])("rejects %s", (url) => expect(parseLocationQr(url)).toBeNull());

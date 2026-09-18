@@ -38,6 +38,9 @@ interface NavigationViewProps {
   rainyMode?: boolean;
 }
 
+const instructionTitle = (title: string) =>
+  title === "まず部屋を出る" ? "まず部屋を背にする" : title;
+
 export function NavigationView({
   from,
   to,
@@ -177,37 +180,29 @@ export function NavigationView({
 
   const currentStep = routeSteps[currentZoomIndex];
 
-  let colorTipMessageFrom = "";
-  let colorTipMessageTo = "";
-  let colorTipMessage = "";
+  type BuildingColorTip = { text: string; className: string };
+  let colorTipFrom: BuildingColorTip | null = null;
+  let colorTipTo: BuildingColorTip | null = null;
 
   if (from.position.includes("オレンジ")) {
-    colorTipMessageFrom = "オレンジ館は床がオレンジ色";
+    colorTipFrom = { text: "オレンジ館は床がオレンジ色", className: "text-orange-600 dark:text-orange-400" };
   } else if (from.position.includes("レッド")) {
-    colorTipMessageFrom = "レッド館は床が赤色";
+    colorTipFrom = { text: "レッド館は床が赤色", className: "text-red-600 dark:text-red-400" };
   } else if (from.position.includes("ブルー")) {
-    colorTipMessageFrom = "ブルー館は床が青色";
+    colorTipFrom = { text: "ブルー館は床が青色", className: "text-blue-600 dark:text-blue-400" };
   }
 
   if (to.position.includes("オレンジ")) {
-    colorTipMessageTo = "オレンジ館は床がオレンジ色";
+    colorTipTo = { text: "オレンジ館は床がオレンジ色", className: "text-orange-600 dark:text-orange-400" };
   } else if (to.position.includes("レッド")) {
-    colorTipMessageTo = "レッド館は床が赤色";
+    colorTipTo = { text: "レッド館は床が赤色", className: "text-red-600 dark:text-red-400" };
   } else if (to.position.includes("ブルー")) {
-    colorTipMessageTo = "ブルー館は床が青色";
+    colorTipTo = { text: "ブルー館は床が青色", className: "text-blue-600 dark:text-blue-400" };
   }
 
-  if (colorTipMessageFrom === "" && colorTipMessageTo === "") {
-    colorTipMessage = "";
-  } else if (colorTipMessageFrom === colorTipMessageTo) {
-    colorTipMessage = `${colorTipMessageFrom}です`;
-  } else if (colorTipMessageFrom === "") {
-    colorTipMessage = `${colorTipMessageTo}です`;
-  } else if (colorTipMessageTo === "") {
-    colorTipMessage = `${colorTipMessageFrom}です`;
-  } else {
-    colorTipMessage = `${colorTipMessageFrom}、${colorTipMessageTo}です`;
-  }
+  const colorTips = colorTipFrom && colorTipTo && colorTipFrom.text === colorTipTo.text
+    ? [colorTipFrom]
+    : [colorTipFrom, colorTipTo].filter((tip): tip is BuildingColorTip => tip !== null);
 
   if (loading) {
     return (
@@ -321,10 +316,18 @@ export function NavigationView({
                 {from.position} → {to.position}
               </span>
             </div>
-            {colorTipMessage && (
-              <div className="flex items-center gap-2 mb-4 text-blue-700 dark:text-blue-300">
-                <Lightbulb className="h-4 w-4" />
-                <span className="text-sm font-semibold">{colorTipMessage}</span>
+            {colorTips.length > 0 && (
+              <div className="mb-4 flex items-center gap-2">
+                <Lightbulb className={`h-4 w-4 shrink-0 ${
+                  colorTips.length > 1 ? "text-muted-foreground" : colorTips[0].className
+                }`} />
+                <span className="text-sm font-semibold">
+                  {colorTips.map((tip, index) => (
+                    <span key={tip.text} className={`block ${tip.className}`}>
+                      {tip.text}{index === colorTips.length - 1 ? "です" : ""}
+                    </span>
+                  ))}
+                </span>
               </div>
             )}
 
@@ -346,7 +349,7 @@ export function NavigationView({
               <div className="flex items-center gap-2 p-2 border border-2 rounded-md border-red-600 dark:border-red-400 text-red-600 dark:text-red-400">
                 <TriangleAlert className="h-4 w-4" />
                 <span className="font-semibold text-balance">
-                  災害時は係員の指示を優先してください
+                  災害時は係員の指示を<br />優先してください
                 </span>
               </div>
             )}
@@ -374,11 +377,9 @@ export function NavigationView({
                   <button
                     onClick={() => openZoomModal(index)}
                     className={` ${
-                      index === 0
-                        ? `transition-all duration-300 ${
-                            highlight ? "border-blue-500" : ""
-                          }`
-                        : "border-border/70"
+                      index === 0 && highlight
+                        ? "border-blue-500 transition-all duration-300"
+                        : "border-border dark:border-neutral-500"
                     } flex gap-4 mb-2 px-4 h-24 items-center w-full text-left bg-card border-2 rounded-lg hover:border-primary/80 transition-colors focus:outline-none focus:ring-2 focus:ring-primary`}
                   >
                     {/* Step Image */}
@@ -386,7 +387,7 @@ export function NavigationView({
                       <div className="flex-shrink-0 w-20 h-20 bg-card border-2 border-primary rounded-lg flex items-center justify-center overflow-hidden hover:border-primary/80 transition-colors">
                         <Image
                           src={`/assembly/${step.image || "/placeholder.svg"}`}
-                          alt={step.title}
+                          alt={instructionTitle(step.title)}
                           width={270}
                           height={480}
                           className="w-full h-full object-cover"
@@ -398,11 +399,11 @@ export function NavigationView({
                     <div className="flex-1">
                       {index !== 0 ? (
                         <h3 className="font-semibold text-lg mb-1">
-                          {step.title}
+                          {instructionTitle(step.title)}
                         </h3>
                       ) : (
                         <h3 className="font-semibold text-lg -mb-1">
-                          {step.title}
+                          {instructionTitle(step.title)}
                         </h3>
                       )}
                     </div>
@@ -451,7 +452,7 @@ export function NavigationView({
             {/* Modal Header */}
             <div className="flex items-center justify-between p-4 border-b border-border flex-shrink-0">
               <h2 className="text-2xl font-bold">
-                {currentStep.title || to.name}
+                {currentStep.title ? instructionTitle(currentStep.title) : to.name}
               </h2>
               <button
                 onClick={closeZoomModal}
@@ -474,7 +475,7 @@ export function NavigationView({
                         }`}
                         width={540}
                         height={960}
-                        alt={currentStep.title}
+                        alt={instructionTitle(currentStep.title)}
                         className="max-w-full max-h-full object-contain rounded-md"
                       />
                     </div>

@@ -7,18 +7,30 @@ export function isTsukukomaGoUrl(value: string): boolean {
   }
 }
 
-export function parseLocationQr(value: string): string | null {
+export type LocationQrPayload = {
+  departureId: string;
+  destinationId: string | null;
+};
+
+const locationQrKeys = new Set(["dep", "dest", "qr"]);
+
+export function parseLocationQr(value: string): LocationQrPayload | null {
   try {
     const url = new URL(value);
+    const departureIds = url.searchParams.getAll("dep");
+    const destinationIds = url.searchParams.getAll("dest");
     if (
       url.origin !== "https://tkgo.bunkasai.info" ||
       url.pathname !== "/" || url.username || url.password || url.hash ||
-      url.searchParams.getAll("dep").length !== 1 ||
-      url.searchParams.getAll("qr").length !== 1 ||
-      url.searchParams.get("qr") !== "true" ||
-      [...url.searchParams.keys()].some((key) => key !== "dep" && key !== "qr")
+      departureIds.length !== 1 || !departureIds[0] ||
+      destinationIds.length > 1 ||
+      (destinationIds.length === 1 && !destinationIds[0]) ||
+      [...url.searchParams.keys()].some((key) => !locationQrKeys.has(key))
     ) return null;
-    return url.searchParams.get("dep") || null;
+    return {
+      departureId: departureIds[0],
+      destinationId: destinationIds[0] ?? null,
+    };
   } catch {
     return null;
   }
