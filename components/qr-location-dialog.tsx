@@ -182,7 +182,7 @@ export function QrLocationDialog({ onSelect }: { onSelect: (departure: Location,
   return (
     <Dialog open={open} onOpenChange={(next) => next ? setOpen(true) : close()}>
       <DialogTrigger asChild>
-        <button type="button" className={`${buttonClass} flex w-full shrink-0 flex-col items-center justify-center gap-1 bg-blue-600 px-2 text-white hover:bg-blue-700`} aria-label="ポスターから現在地を特定">
+        <button type="button" className={`${buttonClass} flex h-full w-full shrink-0 flex-col items-center justify-center gap-1 bg-blue-600 px-2 text-white hover:bg-blue-700`} aria-label="ポスターから現在地を特定">
           <ScanQrCode className="h-6 w-6" aria-hidden="true" /><span className="whitespace-nowrap text-sm">現在地</span>
         </button>
       </DialogTrigger>

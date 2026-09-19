@@ -40,6 +40,7 @@ function open() {
 describe("QR location dialog", () => {
   it("does not request a camera before opening", () => {
     render(<QrLocationDialog onSelect={vi.fn()} />);
+    expect(screen.getByRole("button", { name: "ポスターから現在地を特定" }).className).toContain("h-full");
     expect(getUserMedia).not.toHaveBeenCalled();
   });
   it("opens the poster-first camera screen with concise copy", async () => {
